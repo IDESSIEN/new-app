@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Summer Trip Countdown</title>
+  <meta
+    name="description"
+    content="A vibrant countdown timer for an event you're excited about."
+  >
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #09090f;
+      --surface: rgba(16, 16, 24, 0.82);
+      --surface-strong: #12121b;
+      --text: #f5f3ff;
+      --muted: #b3abc7;
+      --line: rgba(255, 255, 255, 0.09);
+      --accent: #a855f7;
+      --accent-strong: #c084fc;
+      --accent-soft: rgba(168, 85, 247, 0.14);
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.4);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(168, 85, 247, 0.18), transparent 26%),
+        radial-gradient(circle at 82% 18%, rgba(99, 102, 241, 0.14), transparent 22%),
+        linear-gradient(180deg, #07070c 0%, var(--bg) 54%, #0d0d15 100%);
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: auto;
+      pointer-events: none;
+      z-index: 0;
+      border-radius: 999px;
+      filter: blur(10px);
+      opacity: 0.5;
+    }
+
+    body::before {
+      top: 6rem;
+      right: 8vw;
+      width: 15rem;
+      height: 15rem;
+      background: rgba(168, 85, 247, 0.14);
+    }
+
+    body::after {
+      bottom: 3rem;
+      left: 4vw;
+      width: 11rem;
+      height: 11rem;
+      background: rgba(99, 102, 241, 0.12);
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      width: min(calc(100% - 2rem), 1120px);
+      margin: 0 auto;
+      padding: 1.25rem 0 3rem;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .badge,
+    .date-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.7rem 1rem;
+      border-radius: 999px;
+      background: rgba(18, 18, 27, 0.68);
+      border: 1px solid var(--line);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+      backdrop-filter: blur(14px);
+      font-size: 0.95rem;
+    }
+
+    .badge::before {
+      content: "";
+      width: 0.7rem;
+      height: 0.7rem;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.5);
+      animation: pulse 1.8s infinite;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+      gap: 1.5rem;
+      align-items: stretch;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+
+    .story {
+      padding: clamp(1.8rem, 4vw, 3.6rem);
+      overflow: hidden;
+    }
+
+    .story-copy {
+      max-width: 38rem;
+      animation: rise 700ms ease both;
+    }
+
+    .kicker {
+      margin: 0 0 1rem;
+      color: var(--accent-strong);
+      font-size: 0.92rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(3rem, 7vw, 6.4rem);
+      line-height: 0.93;
+      letter-spacing: -0.04em;
+      font-weight: 700;
+    }
+
+    .highlight {
+      display: block;
+      color: var(--accent);
+    }
+
+    .summary {
+      margin: 1.4rem 0 0;
+      max-width: 34rem;
+      color: #cbc5dd;
+      font-size: 1.1rem;
+      line-height: 1.8;
+    }
+
+    .event-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.9rem;
+      margin-top: 1.6rem;
+    }
+
+    .meta-chip {
+      padding: 0.85rem 1rem;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--muted);
+      font-size: 0.98rem;
+    }
+
+    .countdown {
+      padding: 1.2rem;
+      display: grid;
+      gap: 1rem;
+    }
+
+    .countdown-card {
+      padding: 1.3rem;
+      border-radius: 22px;
+      background: var(--surface-strong);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .countdown-card h2,
+    .countdown-card p {
+      margin: 0;
+    }
+
+    .countdown-card h2 {
+      font-size: 1rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .countdown-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.9rem;
+      margin-top: 1rem;
+    }
+
+    .time-block {
+      position: relative;
+      overflow: hidden;
+      padding: 1.15rem 1rem;
+      border-radius: 22px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02)),
+        var(--surface-strong);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      min-height: 7.6rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .time-block::after {
+      content: "";
+      position: absolute;
+      inset: auto -2rem -3.5rem auto;
+      width: 6rem;
+      height: 6rem;
+      border-radius: 50%;
+      background: rgba(168, 85, 247, 0.1);
+    }
+
+    .value {
+      position: relative;
+      z-index: 1;
+      font-size: clamp(2.4rem, 5vw, 3.8rem);
+      line-height: 1;
+      font-weight: 700;
+      letter-spacing: -0.06em;
+    }
+
+    .label {
+      position: relative;
+      z-index: 1;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-size: 0.75rem;
+    }
+
+    .status {
+      margin-top: 1rem;
+      padding: 1rem 1.1rem;
+      border-radius: 18px;
+      background: var(--accent-soft);
+      color: #dcc4ff;
+      font-weight: 600;
+      line-height: 1.6;
+    }
+
+    .details {
+      display: grid;
+      gap: 0.85rem;
+      margin-top: 0.3rem;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      color: #c7c0d8;
+      font-size: 0.98rem;
+    }
+
+    .detail-row strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .footer-note {
+      margin: 1rem 0 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.6;
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.45);
+      }
+
+      70% {
+        box-shadow: 0 0 0 12px rgba(168, 85, 247, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(168, 85, 247, 0);
+      }
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(18px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 900px) {
+      .hero {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        width: min(calc(100% - 1rem), 1120px);
+        padding: 0.75rem 0 1.5rem;
+      }
+
+      .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+      }
+
+      .panel {
+        border-radius: 20px;
+      }
+
+      .story,
+      .countdown {
+        padding: 1rem;
+      }
+
+      .countdown-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+      }
+
+      .detail-row {
+        flex-direction: column;
+        gap: 0.2rem;
+      }
+
+      h1 {
+        font-size: clamp(2.4rem, 14vw, 3.8rem);
+      }
+
+      .summary {
+        font-size: 1rem;
+        line-height: 1.7;
+      }
+
+      .meta-chip,
+      .badge,
+      .date-pill {
+        width: 100%;
+      }
+
+      .time-block {
+        min-height: 6.5rem;
+        padding: 1rem 0.9rem;
+      }
+
+      .value {
+        font-size: clamp(2rem, 10vw, 2.8rem);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div class="badge">Counting down to something amazing</div>
+      <div class="date-pill" id="target-date-label">August 16, 2026 at 10:00 AM</div>
+    </header>
+
+    <main class="hero">
+      <section class="panel story" aria-labelledby="countdown-title">
+        <div class="story-copy">
+          <p class="kicker">Big Plans Ahead</p>
+          <h1 id="countdown-title">
+            Summer Trip
+            <span class="highlight">starts soon.</span>
+          </h1>
+          <p class="summary">
+            The bags are half-packed, the playlist is ready, and all that’s left is the final countdown.
+            This page keeps the excitement front and center until the trip finally begins.
+          </p>
+
+          <div class="event-meta" aria-label="Event highlights">
+            <div class="meta-chip">Destination: Zanzibar</div>
+            <div class="meta-chip">Mood: Sun, food, and ocean air</div>
+            <div class="meta-chip">Goal: Make the wait feel worth it</div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel countdown" aria-label="Countdown timer">
+        <section class="countdown-card">
+          <h2>Time Remaining</h2>
+          <div class="countdown-grid" aria-live="polite">
+            <div class="time-block">
+              <span class="value" id="days">00</span>
+              <span class="label">Days</span>
+            </div>
+            <div class="time-block">
+              <span class="value" id="hours">00</span>
+              <span class="label">Hours</span>
+            </div>
+            <div class="time-block">
+              <span class="value" id="minutes">00</span>
+              <span class="label">Minutes</span>
+            </div>
+            <div class="time-block">
+              <span class="value" id="seconds">00</span>
+              <span class="label">Seconds</span>
+            </div>
+          </div>
+          <p class="status" id="status-message">
+            The countdown is live. Every tick gets you closer to takeoff.
+          </p>
+        </section>
+
+        <section class="countdown-card">
+          <h2>Event Details</h2>
+          <div class="details">
+            <div class="detail-row">
+              <span>Event</span>
+              <strong>Summer Trip Kickoff</strong>
+            </div>
+            <div class="detail-row">
+              <span>When</span>
+              <strong id="target-date-detail">August 16, 2026 at 10:00 AM</strong>
+            </div>
+            <div class="detail-row">
+              <span>Why it matters</span>
+              <strong>A well-earned reset with people you love</strong>
+            </div>
+          </div>
+          <p class="footer-note">
+            Update the event name, destination, and target date in the script to make this countdown your own.
+          </p>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    const eventConfig = {
+      name: "Summer Trip Kickoff",
+      location: "Zanzibar",
+      targetDate: "2026-08-16T10:00:00"
+    };
+
+    const targetDate = new Date(eventConfig.targetDate);
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      dateStyle: "long",
+      timeStyle: "short"
+    });
+
+    const timeElements = {
+      days: document.getElementById("days"),
+      hours: document.getElementById("hours"),
+      minutes: document.getElementById("minutes"),
+      seconds: document.getElementById("seconds")
+    };
+
+    const statusMessage = document.getElementById("status-message");
+    const targetDateLabel = document.getElementById("target-date-label");
+    const targetDateDetail = document.getElementById("target-date-detail");
+
+    const formattedDate = formatter.format(targetDate);
+    targetDateLabel.textContent = formattedDate;
+    targetDateDetail.textContent = formattedDate;
+
+    function formatValue(value) {
+      return String(value).padStart(2, "0");
+    }
+
+    function renderCountdown() {
+      const now = new Date();
+      const difference = targetDate.getTime() - now.getTime();
+
+      if (difference <= 0) {
+        timeElements.days.textContent = "00";
+        timeElements.hours.textContent = "00";
+        timeElements.minutes.textContent = "00";
+        timeElements.seconds.textContent = "00";
+        statusMessage.textContent = eventConfig.name + " is here. It’s time to celebrate and enjoy every minute of it.";
+        return;
+      }
+
+      const totalSeconds = Math.floor(difference / 1000);
+      const days = Math.floor(totalSeconds / 86400);
+      const hours = Math.floor((totalSeconds % 86400) / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+
+      timeElements.days.textContent = formatValue(days);
+      timeElements.hours.textContent = formatValue(hours);
+      timeElements.minutes.textContent = formatValue(minutes);
+      timeElements.seconds.textContent = formatValue(seconds);
+
+      if (days === 0) {
+        statusMessage.textContent = "Today is the day. Final countdown mode is fully activated.";
+      } else if (days <= 7) {
+        statusMessage.textContent = "Only " + days + " day" + (days === 1 ? "" : "s") + " left until " + eventConfig.name + ".";
+      } else {
+        statusMessage.textContent = "Counting down to " + eventConfig.name + " in " + eventConfig.location + ".";
+      }
+    }
+
+    renderCountdown();
+    setInterval(renderCountdown, 1000);
+  </script>
+</body>
+</html>
